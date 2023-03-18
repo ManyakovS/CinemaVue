@@ -1,0 +1,2 @@
+C:\Users\Пользователь\OneDrive\Рабочий стол\Cinema2\Cinema\vueapp\obj\Debug\vueapp.esproj.SuggestedBindingRedirects.cache
+C:\Users\Пользователь\OneDrive\Рабочий стол\Cinema2\Cinema\vueapp\obj\Debug\vueapp.esproj.CoreCompileInputs.cache
