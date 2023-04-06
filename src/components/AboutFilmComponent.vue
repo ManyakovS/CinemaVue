@@ -1,5 +1,8 @@
 <template>
-    <div class="container">
+    <div class="container"     
+    @wheel.prevent
+    @touchmove.prevent
+    @scroll.prevent>
         <span class="go-back" @click="this.$emit('CloseAbout', true)"></span>
 
         <div class="film">
@@ -18,7 +21,7 @@
         </div>
 
 
-        <button @click.prevent="this.$emit('OpenBuy', true)" class="buy">Confirm</button>
+        <button @click.prevent="goBack" class="buy">Confirm</button>
     </div>
 </template>
 
@@ -26,7 +29,12 @@
     export default {
         props: {
             film: {}
-        }
+        },
+        methods: {
+            goBack() {
+                this.$emit('OpenBuy', true)
+            },
+        },
     }
 </script>
 

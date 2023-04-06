@@ -1,5 +1,5 @@
 <template>
-    <div class="loading_page" v-show="!isLoading">
+    <div class="loading_page" v-show="!isLoading"  >
         <h2>Loading...<br>Please wait</h2>
     </div>
     <div class="container container__film" v-show="isLoading" v-if="!isOpenAbout & !isOpenTicket" 
@@ -66,7 +66,8 @@
     <ticket-component 
     v-show="isOpenTicket" 
     @CloseTicket="BuyTicket" 
-    :film="selectedFilm">
+    :film="selectedFilm"
+    :is-reset="false">
 
     </ticket-component>
 </template>
@@ -128,7 +129,7 @@ import FilmListComponent from '@/components/FilmListComponents.vue'
             },
             Console() {
                 console.log('ххх')
-            }
+            },
         },
         computed: {
                 ...mapState({
@@ -143,6 +144,9 @@ import FilmListComponent from '@/components/FilmListComponents.vue'
                     this.isLoading = true
                 else
                     this.$router.push('/')
+
+
+                
             }
         }
     
