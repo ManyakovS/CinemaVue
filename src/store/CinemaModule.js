@@ -6,6 +6,7 @@ export const cinemaModule = {
         films: [],
         BASE_URL: 'https://localhost:7172',
         user: Object,
+        selectedFilm: {},
 /*         posts: [],
         isPostsLoading: false,
         selectedSort: '',
@@ -38,6 +39,9 @@ export const cinemaModule = {
         },
         setUser(state, user) {
             state.user = user
+        },
+        setSelectedFilm(state, selectedFilm) {
+            state.selectedFilm = selectedFilm
         },
 /*         setPosts(state, posts) {
             state.posts = posts;

@@ -7,8 +7,8 @@
         </div>
 
         <div class="film__list">
-            <div v-for="film in films.slice(0,4)" :key="film.filmId" @click="this.$emit('OpenAboutFilm', film)">
-                <img src="../assets/films/Scream6/p0.png" alt="">
+            <div v-for="film in films.slice(0,3)" :key="film.filmId" @click="this.$emit('OpenAboutFilm', film)">
+                <img :src="require(`../assets/films/${getLink(film)}/p0.png`)" alt="">
                 <p>{{film.name}}</p>
             </div>
         </div>
@@ -16,10 +16,19 @@
 </template>
 
 <script>
+import {getLink} from '@/API/midleware'
     export default {
         props: {
-            films: Object,
+            films: Array,
             title: String,
+        },
+        data() {
+            return {
+                name: 'ShazamFurythegods',
+            }
+        },
+        methods: {
+            getLink
         }
     }
 </script>

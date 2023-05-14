@@ -146,4 +146,49 @@ input {
 ::placeholder {
   color: rgba($color: $white, $alpha: .45);
 }
+
+
+
+@mixin width($width) {
+  width: $width;
+}
+
+@mixin height($height) {
+  height: $height;
+}
+
+
+.w-10 {
+  @include width(10vw)
+}
+
+.w-12 {
+  @include width(12vw)
+}
+
+.grid-col-1 {
+  grid-column: 1/2;
+}
+.grid-col-2 {
+  grid-column: 2/3;
+}
+.grid-col-3 {
+  grid-column: 3/4;
+}
+.grid-col-4 {
+  grid-column: 4/5;
+}
+.grid-col-5 {
+  grid-column: 5/6;
+}
+.grid-col-6 {
+  grid-column: 6/7;
+}
+.grid-col-7 {
+  grid-column: 7/8;
+}
+.grid-col-8 {
+  grid-column: 8/9;
+}
+
 </style>

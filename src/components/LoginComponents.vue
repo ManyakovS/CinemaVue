@@ -19,7 +19,7 @@
             </label>
         </form>
 
-        <button @click="Authorization">Login</button>
+        <button @click="Auth">Login</button>
         <p>— OR —</p>
         <router-link class="router-link" to="/">Sing in like guest</router-link>
 
@@ -50,13 +50,19 @@ import {mapState, mapMutations} from 'vuex'
             async GetToken() {
                 if(this.email != '' && this.password != '')
                 try {
-                    const response = await axios.post(this.BASE_URL + '/api/Auth/login',
-                        {
-                            userName: this.email,
-                            password: this.password
-                        }
-                    )
-                    return response.data
+                    const res = await axios.post(this.BASE_URL + '/api/Auth/login',{userName: this.email, password: this.password})
+                    .then(res => {
+                        return Object.assign(res.data)
+                    })
+
+                    let date = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+                    document.cookie = `RefreshToken=${res.refreshToken}; expires=` + date.toUTCString();
+
+                    document.cookie = `UserID=${res.userId}; expires=` + date.toUTCString();
+
+                    date = new Date(Date.now() + 30 * 60 * 1000);
+                    document.cookie = `Token=${res.token}; expires=` + date.toUTCString();
+                    return res
 
                 } catch (e) {
                     console.log(e)
@@ -65,30 +71,18 @@ import {mapState, mapMutations} from 'vuex'
                     this.loading = false;
                 }
             },
-            async Authorization() {
-                this.token = await this.GetToken()
-
-                await axios.get(this.BASE_URL + '/api/Film', { headers: {"Authorization" : `Bearer ${this.token}`} })
-                .then(res => {
-                    this.setFilms(res.data)
-                    this.setToken(this.token)
-                })
-                .catch(error => console.log(error)) 
-
-                await axios.get(this.BASE_URL + '/api/User/GetUserOnLogin?UserName=' + this.email, {headers: {"Authorization" : `Bearer ${this.token}`} })
-                .then(res => {
-/*                     console.log(res.data) */
-                    this.setUser(res.data)
-                })
-                .catch(error => console.log(error)) 
-
-                this.$router.push('/film')
-            },
+            async Auth() {
+                var user = await this.GetToken()
+                if(this.user != undefined){
+                    this.setToken(user.token)
+                    this.setUser(user)
+                    this.$router.push('/film')
+                }
+            }
         },
         computed: {
                 ...mapState({
                     BASE_URL: state => state.post.BASE_URL,
-                    token: state => state.post.token,
                     films: state => state.post.films,
                     user: state => state.post.user,
             }),

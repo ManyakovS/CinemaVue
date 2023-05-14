@@ -3,10 +3,10 @@
     @wheel.prevent
     @touchmove.prevent
     @scroll.prevent>
-        <span class="go-back" @click="this.$emit('CloseAbout', true)"></span>
+        <span class="go-back" @click="this.$router.push('/film')"></span>
 
         <div class="film">
-            <video src=""></video>
+            <img :src="require(`@/assets/films/${getLink(film)}/p1.png`)" alt="">
 
             <div class="film_desc">
                 <h2>{{film.name}}</h2>
@@ -14,18 +14,28 @@
             </div>
 
             <div class="images">
-
+                
             </div>
 
             <div class="rating">IMDB {{film.rating}}</div>
         </div>
 
+        <div class="time">
+            <p>Time</p>
+            <h3>{{ film.duration }} Min</h3>
+        </div>
+
+        <div class="desctiption">
+            <h2>Desctiption</h2>
+            <p>{{ film.description }}</p>
+        </div>
 
         <button @click.prevent="goBack" class="buy">Confirm</button>
     </div>
 </template>
 
 <script>
+import {getLink} from '@/API/midleware'
     export default {
         props: {
             film: {}
@@ -34,6 +44,7 @@
             goBack() {
                 this.$emit('OpenBuy', true)
             },
+            getLink
         },
     }
 </script>
@@ -45,20 +56,32 @@
     justify-content: flex-start;
 
     .film {
+        position: relative;
+
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
         position: relative;
-        height: 40vh;
+        height: 35vh;
         width: 100%;
-        background-color: rgb(24, 83, 28);
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: .7;
+        }
 
         .film_desc {
-            margin-left: 2vw;
+            position: absolute;
+            left: 2vw;
+            bottom: 0;
 
+            h2 {
+                max-width: 45vw;
+            }
             h3 {
                 font-size: 1rem;
-                color: $gray;
+                color: $white;
                 font-weight: 400;
             }
 
@@ -76,7 +99,7 @@
             font-weight: 600;
             font-size: 1.1rem;
             text-align: center;
-            background-color: rgba(255, 187, 0, 0.6);
+            background-color: rgba(255, 187, 0, .9);
             filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
             border-radius: 14px;
             color: black;
@@ -93,10 +116,9 @@
             right: calc(15% - 14vw /2);;
             bottom: 10%;
             border-radius: 14px;
+
         }
     }
-
-
 
     .buy {
         position: fixed;
@@ -111,6 +133,28 @@
         background-color: $green;
         border-radius: 14px;
         font-size: 1.3rem;
+    }
+
+    .time {
+        margin-top: 1vh;
+        p {
+            text-align: center;
+            font-size: 1.1rem;
+            color: $gray;
+            margin-bottom: .5vh;
+        }
+    }
+
+    .desctiption {
+        margin-top: 2vh;
+        h2 {
+            text-align: center;
+            color: rgba($color: $white, $alpha: .9);
+        }
+        p {
+            margin: 1vh 5vw;
+            color: rgba($color: $white, $alpha: .9);
+        }
     }
 }
 

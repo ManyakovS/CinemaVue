@@ -4,7 +4,7 @@
         <span class="white__circle"></span>
 
         <div class="menu">
-            <span class="go-back" @click="goBack"></span>
+            <span class="go-back" @click="this.$emit('CloseTicket', true)"></span>
 
             <h3>Tenet</h3>
         </div>
@@ -71,7 +71,7 @@
             <p>Cost: {{selectedTicket.cost}}</p>
             <button v-if="selectedTicket.state === 'Created'" @click.prevent="addTicketToList">add</button>
             <button v-if="selectedTicket.state === 'Selected'" @click.prevent="cancelTicket">cancel</button>
-            <button v-else @click.prevent="isSelectTicket = !isSelectTicket">next</button>
+            <button v-if="selectedTicket.state === 'Bought'" @click.prevent="isSelectTicket = !isSelectTicket">next</button>
         </div>
     </div>
 
@@ -88,15 +88,13 @@ import axios from 'axios';
 import {mapState} from 'vuex'
     export default {
         props: {
-            film: Object,
-            isReset: Boolean
+            film: Object
         },
         data(){
             return {
 
             sessions: '',
             isLoading: undefined,
-            isUniq: false,
             selectedSession: '',
 
             selectedDate: 3,
@@ -136,7 +134,7 @@ import {mapState} from 'vuex'
                 await axios.get(this.BASE_URL + "/api/Session/films/" + await this.film.filmId, { headers: {"Authorization" : `Bearer ${this.token}`} })
                 .then(res => {
                     this.sessions = res.data;
-                    console.log(res);
+/*                     console.log(res); */
                     this.isLoading = false;
                     
                 })
@@ -146,7 +144,7 @@ import {mapState} from 'vuex'
                 await axios.get(this.BASE_URL + "/api/CinemaHalls/places/1" + await this.film.filmId, { headers: {"Authorization" : `Bearer ${this.token}`} })
                 .then(res => {
                     this.sessions = res.data;
-                    console.log(res);
+                    /* console.log(res); */
                     
                 })
                 .catch(error => console.log(error)) 
@@ -155,31 +153,22 @@ import {mapState} from 'vuex'
                 await axios.get(this.BASE_URL + "/api/Ticket/" + this.selectedSession, { headers: {"Authorization" : `Bearer ${this.token}`} })
                 .then(res => {
                     this.tickets = res.data;
-                    console.log(res);
+                    /* console.log(res); */
                     
                 })
                 .catch(error => console.log(error)) 
             },
             async FetchSelectedPlace() {
-                console.log(this.selectedTicket.placeId)
+                /* console.log(this.selectedTicket.placeId) */
                 await axios.get(this.BASE_URL + "/api/CinemaHalls/place/" + this.selectedTicket.placeId, { headers: {"Authorization" : `Bearer ${this.token}`} })
                 .then(res => {
                     this.selectedTicket.place = Object.assign(res.data);
-                    console.log(res);
+                    /* console.log(res); */
                     
                 })
                 .catch(error => console.log(error)) 
             },
             async PostTicket() {
-
-/*                 await axios.put(this.BASE_URL + '/api/Ticket?TicketID='+this.selectedTicket.ticketId
-                +'&state=Bought&SessionID='
-                +this.selectedSession.sessionId
-                +'&PlaceID='
-                +this.selectedTicket.placeId 
-                +'&UserID=1', { headers: {"Authorization" : `Bearer ${this.token}`} })
-                .catch(error => console.log(error))  */
-
                 await axios({
                 method: 'put',
                 url: this.BASE_URL + '/api/Ticket?TicketID='+this.selectedTicket.ticketId
@@ -187,16 +176,10 @@ import {mapState} from 'vuex'
                 +this.selectedSession
                 +'&PlaceID='
                 +this.selectedTicket.placeId 
-                +'&UserID=1',
+                +'&employeeId=1'
+                +'&UserID=' + this.user.userId
+                ,
                 headers: {"Authorization" : `Bearer ${this.token}`},
-/*                 data: {
-                    TicketID: this.selectedTicket.ticketId,
-                    state: 'Bought',
-                    SessionID: this.selectedSession,
-                    PlaceID: this.selectedTicket.placeId ,
-                    EmployeeID: null,
-                    UserID: 1
-                } */
             })
             .then(res => {
                     console.log(res);
@@ -214,6 +197,10 @@ import {mapState} from 'vuex'
                 return (_date.toDateString().split(' '))
 
                 /* console.log(Date.parse(arr)); */
+            },
+            isHaveSession() {
+                if(this.sessions.length > 1) return true
+                    else false
             },
             getDay(date) {/*  */
                 var _date = this.GetDate(date)
@@ -240,31 +227,32 @@ import {mapState} from 'vuex'
                 this.uniqueDate = Object.assign(out)
                 this.isUniq = true
             },
-            goBack() {
-                this.Reset()
-                this.$emit('CloseTicket', true)
-
-
-
-            },
             swipeLeftUniqDate() {
+                if(this.isHaveSession()){
                 this.uniqueDate.push(this.uniqueDate.shift())
                 this.time = this.sessions.filter(p => p.date === this.uniqueDate[this.selectedDate])
                 this.selectTime()
+                }
             },
             swipeRightUniqDate() {
-                this.uniqueDate.unshift(this.uniqueDate.pop())
-                this.time = this.sessions.filter(p => p.date === this.uniqueDate[this.selectedDate])
-                this.selectTime()
+                if(this.isHaveSession()){
+                    this.uniqueDate.unshift(this.uniqueDate.pop())
+                    this.time = this.sessions.filter(p => p.date === this.uniqueDate[this.selectedDate])
+                    this.selectTime()
+                }
+                
             },
             swipeLeftTime() {
+                if(this.isHaveSession()){
                 this.time.push(this.time.shift())
                 this.SearchSession()
+                }
             },
-
             swipeRightTime() {
+                if(this.isHaveSession()){
                 this.time.unshift(this.time.pop())
                 this.SearchSession()
+                }
             },
             selectTime() {
                 if(this.time.length >= 5) this.timeCouter = 2 
@@ -276,7 +264,7 @@ import {mapState} from 'vuex'
                 this.selectedSession = this.time[this.timeCouter].sessionId
             },
             buyTicket(chair) {
-                console.log(chair)
+                /* console.log(chair) */
                 this.selectedTicket = chair
                 this.isSelectTicket = !this.isSelectTicket
                 this.FetchSelectedPlace()
@@ -307,34 +295,17 @@ import {mapState} from 'vuex'
                     this.isSuccesBuy = true
                     setTimeout(() => {this.isSuccesBuy = false}, 1000);
                 }
-            },
-            Reset() {
-                console.log("РЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕЕСЕЕЕТ")
-                this.isLoading = undefined
-                this.isUniq = false
-                this.sessions = ''
-
-                this.tickets = []
-                this.time = []
-                this.uniqueDate = []
-                this.sessions = ''
             }
 
             
         },
-        beforeUpdate() {
-            if(this.isReset === false) {
-                this.FetchSession()
-                this.uniqueFast(this.sessions)
-                this.time = this.sessions.filter(p => p.date === this.uniqueDate[this.selectedDate])
-                this.selectTime()
+        async mounted() {
+            if(this.film === null) return
+            if(this.isLoading === undefined){
+                await this.FetchSession()
             }
-        },
-        updated() {
-            if(this.isLoading === undefined) 
-                this.FetchSession()
             
-            if(!this.isUniq && this.sessions !== '')
+            if(this.sessions !== '')
             {
                 this.uniqueFast(this.sessions)
                 this.time = this.sessions.filter(p => p.date === this.uniqueDate[this.selectedDate])
@@ -347,6 +318,7 @@ import {mapState} from 'vuex'
                 ...mapState({
                     token: state => state.post.token,
                     BASE_URL: state => state.post.BASE_URL,
+                    user: state => state.post.user,
             }),
         },
         watch: {

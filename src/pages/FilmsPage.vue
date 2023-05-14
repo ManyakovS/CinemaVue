@@ -2,15 +2,15 @@
     <div class="loading_page" v-show="!isLoading"  >
         <h2>Loading...<br>Please wait</h2>
     </div>
-    <div class="container container__film" v-show="isLoading" v-if="!isOpenAbout & !isOpenTicket" 
+    <div class="container container__film" v-show="isLoading" 
     >
 
         <span @click="OpenMenu" class="menu_button"><ion-icon name="menu"></ion-icon></span>
 
-        <div class="promo" v-for="film in films.slice(0,1)" :key="film.filmId">
-            <img src="../assets/films/Scream6/p1.png" alt="">
+        <div @click="log" class="promo" v-for="film in filmNow.slice(0,1)" :key="film.filmId">
+            <img  :src="require(`../assets/films/${getLink(film)}/p1.png`)" alt="">
             <div>
-                <h3>{{film.description}}</h3>
+                <h3>{{film.description.slice(0,60)+"..."}}</h3>
                 <h2>{{film.name}}</h2>
                 <p>{{Math.round(film.duration / 60) + 'h ' + film.duration % 60 + 'min' }}</p>
             </div>
@@ -18,14 +18,14 @@
 
         <film-list-component 
         class="this_week" 
-        :films="films" 
+        :films="filmNow" 
         :title="'Opening this week'"
         @OpenAboutFilm="OpenAboutFilm">
         </film-list-component>
 
         <film-list-component 
         class="cooming_soon" 
-        :films="films" 
+        :films="filmFuture" 
         :title="'Cooming Soon'"
         @OpenAboutFilm="OpenAboutFilm">
         </film-list-component>
@@ -47,77 +47,41 @@
             </div>
             <ul @click.self="CloseMenu">
                 <li @click.self="CloseMenu"><span><ion-icon name="home"></ion-icon></span>Home</li>
-                <li><span><ion-icon name="ticket"></ion-icon></span>Tickets</li>
+                <li @click.self="this.$router.push('/myTicket')"><span><ion-icon name="ticket"></ion-icon></span>Tickets</li>
                 <li><span><ion-icon name="bookmarks"></ion-icon></span>Saved</li>
                 <li><span><ion-icon name="settings"></ion-icon></span>Settings</li>
-                <li @click.stop="this.$router.push('/')"><span><ion-icon name="exit"></ion-icon></span>Logout</li>
+                <li @click.stop="Logout"><span><ion-icon name="exit"></ion-icon></span>Logout</li>
             </ul>
         </div>
     </div>
-
-    <about-film-component 
-    :film="selectedFilm" 
-    v-show="isOpenAbout" 
-    @CloseAbout="isOpenAbout = false"
-    @OpenBuy="BuyTicket"
-    >
-    </about-film-component>
-
-    <ticket-component 
-    v-show="isOpenTicket" 
-    @CloseTicket="BuyTicket" 
-    :film="selectedFilm"
-    :is-reset="false">
-
-    </ticket-component>
 </template>
 
 <script>
-import axios from 'axios';
-import {mapState} from 'vuex'
+/* import axios from 'axios'; */
+import {mapState, mapMutations} from 'vuex'
+import {refreshToken, getCookie, logOut, getLink} from '@/API/midleware'
+import {FetchFilms, FetchUsersForId} from '@/API/methods'
 
-import AboutFilmComponent from '@/components/AboutFilmComponent.vue'
-import TicketComponent from '@/components/TicketComponent.vue'
 import FilmListComponent from '@/components/FilmListComponents.vue'
 
+import { toRaw } from 'vue';
+
     export default {
-  components: { TicketComponent, AboutFilmComponent, FilmListComponent },
+  components: {FilmListComponent },
         data() {
             return {
                 isLoading: false,
-                isOpenTicket: false,
-                isOpenAbout: false,
-
-                selectedFilm: '',
+                filmNow: [],
+                filmFuture: [],
             }
         },
         methods: {
-            async Authorization() {
-                axios.get(this.BASE_URL + '/WeatherForecast', { headers: {"Authorization" : `Bearer ${await this.GetToken()}`} })
-                .then(res => {
-                    console.log(res)
-                    this.$router.push('/film')
-                })
-                .catch(error => console.log(error)) 
-            },
-
-            OpenAboutFilm(film) {
-                this.selectedFilm = film;
-                this.isOpenAbout = true;
-
-            },
-            OpenBuyTicket() {
-                this.isOpenAbout = false;
-                this.isOpenTicket = true;
-            },
-            CloseBuyTicket() {
-                this.isOpenAbout = true;
-                this.isOpenTicket = false;
-            },
-            BuyTicket() {
-                this.isOpenAbout = !this.isOpenAbout;
-                this.isOpenTicket = !this.isOpenTicket;
-            },
+            ...mapMutations({
+                setSelectedFilm: 'post/setSelectedFilm',
+                setToken: 'post/setToken',
+                setFilms: 'post/setFilms',
+                setUser: 'post/setUser',
+            }),
             OpenMenu() {
                 document.getElementsByClassName('menu')[0].classList.remove('menu_close')
                 document.getElementsByClassName('menu')[0].classList.add('menu_open')
@@ -127,9 +91,20 @@ import FilmListComponent from '@/components/FilmListComponents.vue'
                 document.getElementsByClassName('menu')[0].classList.add('menu_close')
 
             },
-            Console() {
-                console.log('ххх')
+            OpenAboutFilm(film) {
+                this.setSelectedFilm(film)
+                this.$router.push({ name: 'ticket', params: { filmName: film.name } })
+
             },
+            Logout() {
+                logOut()
+                this.$router.push('/')
+                this.setUser(Object)
+                this.setToken('')
+            },
+            getLink
+            ,
+            
         },
         computed: {
                 ...mapState({
@@ -139,14 +114,41 @@ import FilmListComponent from '@/components/FilmListComponents.vue'
             }),
 
         },
-        mounted() {
-                if(this.token !== '')
+        async mounted() {
+                if(this.token !== ''){
+                    await FetchFilms(this.token).then(res => {
+                            this.setFilms(res)
+                            }   
+                        )
                     this.isLoading = true
-                else
-                    this.$router.push('/')
+                }
+                else {
+                    await refreshToken().then(async res => {
+                        this.setToken(res)
+                        this.isLoading = true
+                        FetchFilms(this.token).then(res => {
+                            this.setFilms(res)
+                        })
+                        FetchUsersForId(this.token, await getCookie('UserID').then(res => res))
+                        .then(res => {
+                            this.setUser(res)
+                        })
 
-
-                
+                    }).catch(e => {
+                        console.log(e)
+                    })              
+                }
+                if(this.token === undefined) this.$router.push('/')
+            },
+            watch: {
+                films() {
+                    if(this.films != null)
+                    {
+/*                         console.log(toRaw(this.films)[0]) */
+                        this.filmNow = (toRaw(this.films)[0])
+                        this.filmFuture = (toRaw(this.films)[1])
+                    }
+                }
             }
         }
     
@@ -184,7 +186,7 @@ import FilmListComponent from '@/components/FilmListComponents.vue'
             width: 100%;
 
             img {
-                object-fit: contain;
+                object-fit: cover;
                 object-position: top;
                 width: 100%;
                 height: 100%;
@@ -208,6 +210,7 @@ import FilmListComponent from '@/components/FilmListComponents.vue'
 
                 h2 {
                     font-size: 2rem;
+                    line-height: 2.6rem;
                     font-weight: 600;
                 }
 
